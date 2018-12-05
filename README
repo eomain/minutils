@@ -1,0 +1,29 @@
+
+minutils: collection of user space utility software
+
+list of packages:
+
+    ash: acorn shell
+    cp:
+    cat:
+    rm:
+    touch:
+    wc:
+
+build instructions:
+
+    to build a package use:         make <package>
+    or to build all packages use:   make all
+    to install ash use:             make install-ash
+    you can uninstall with:         make uninstall-ash
+    to clean up:                    make clean
+
+ash usage:
+    to display prompt:      help
+    to list builtins:       builtin
+
+note: not all software packages are currently feature complete
+
+author: eomain
+
+minutils - 2018
