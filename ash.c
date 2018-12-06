@@ -195,6 +195,13 @@ static struct ash_variable *ash_find_var(const char *s)
     return NULL;
 }
 
+static void ash_set_builtin_var(int o, const char *v)
+{
+    struct ash_variable *var = ash_find_builtin_var(o);
+    if(var)
+        var->value = v;
+}
+
 static void ash_dir(void){
     if (pwd){
         size_t len = strlen(pwd);
@@ -443,12 +450,10 @@ static void ash_init(void)
             host = h;
     }
 
-    struct ash_variable *ash_host = ash_find_builtin_var(ASH_HOST);
-    if (ash_host)
-        ash_host->value = host;
-    struct ash_variable *ash_path = ash_find_builtin_var(ASH_PATH);
-    if (ash_path)
-        ash_path->value = getenv(ENV_PATH);
+    ash_set_builtin_var(ASH_HOST, host);
+    ash_set_builtin_var(ASH_PATH, getenv(ENV_PATH));
+    ash_set_builtin_var(ASH_PWD, pwd);
+    ash_set_builtin_var(ASH_LOGNAME, uname);
     struct ash_variable *ash_home = ash_find_builtin_var(ASH_HOME);
     if (ash_home){
         if ((ash_home->value = getenv(ENV_HOME)) == NULL)
@@ -457,12 +462,6 @@ static void ash_init(void)
         if (ash_home->value && !strcmp(pwd, ash_home->value))
                         dir = "~";
     }
-    struct ash_variable *ash_pwd = ash_find_builtin_var(ASH_PWD);
-    if (ash_pwd)
-        ash_pwd->value = pwd;
-    struct ash_variable *ash_logname = ash_find_builtin_var(ASH_LOGNAME);
-    if (ash_logname)
-        ash_logname->value = uname;
 }
 
 static void ash_main(int argc, const char **pargs)
