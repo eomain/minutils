@@ -66,11 +66,14 @@ static void wc(const char *fname)
     if (len == 0)
         lc = wcs = 0;
     else {
-        if (!isspace(f[0]))
-            ++wcs;
+        int v = !isspace(f[0])? 1: 0;
         for (size_t i = 0; i < len; ++i){
-            if (isspace(f[i]))
+            if (!v && isspace(f[i]))
+                v = 1;
+            else if (v && !isspace(f[i])){
                 ++wcs;
+                v = 0;
+            }
             if (f[i] == '\n')
                 ++lc;
         }
