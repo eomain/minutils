@@ -10,8 +10,7 @@
 
 #define PNAME "wc"
 #define BSIZE 4096
-#define CHECK 200
-#define LIMIT 100
+#define LIMIT 255
 
 static void print_err(const char *msg)
 {
@@ -26,9 +25,14 @@ static void print_errno(const char *msg)
 }
 
 static char buf[BSIZE];
-static int b = 0;
-static int l = 0;
-static int w = 0;
+
+static int flag = 0;
+
+enum {
+    BYTES = 1 << 0,
+    LINES = 1 << 1,
+    WORDS = 1 << 2
+};
 
 static void wc(const char *fname)
 {
@@ -42,14 +46,14 @@ static void wc(const char *fname)
 
     char *f;
 
-    if(len < BSIZE){
+    if (len < BSIZE){
         memset(buf, 0, BSIZE);
         if (fread(buf, sizeof (char), len, s) != len)
             print_errno(fname);
         f = buf;
     } else {
-        f = calloc((len + 1), sizeof(char));
-        if(!f)
+        f = calloc((len + 1), sizeof (char));
+        if (!f)
             print_errno(fname);
         if (fread(f, sizeof (char), len, s) != len)
             print_errno(fname);
@@ -71,14 +75,17 @@ static void wc(const char *fname)
                 ++lc;
         }
     }
-    if(!b && !l && !w)
-        b = l = w = 1;
-    if (b)
+    if (!flag)
+        flag = ~flag;
+    if (flag & BYTES)
         fprintf(stdout, "%lu\n", len);
-    if (l)
+    if (flag & LINES)
         fprintf(stdout, "%lu\n", lc);
-    if (w)
+    if (flag & WORDS)
         fprintf(stdout, "%lu\n", wcs);
+
+    if (f != buf)
+        free(f);
 }
 
 int main(int argc, const char *argv[])
@@ -94,23 +101,21 @@ int main(int argc, const char *argv[])
 
     int count = 0;
     const char *pargs[LIMIT];
-    for (size_t i = 0; i < argc -1; ++i)
-        if (*(argv[i + 1]) != '-'){
-            if(count == 100){
+    for (size_t i = 1; i < argc; ++i)
+        if (*(argv[i]) != '-'){
+            if(count == LIMIT)
                 print_err("exceeded max limit");
-                return -1;
-            }
-            pargs[count++] = argv[i + 1];
+            pargs[count++] = argv[i];
         } else
-            switch(argv[i + 1][1]){
-                case 'b':   b = 1;
+            switch (argv[i][1]){
+                case 'b':   flag |= BYTES;
                     break;
-                case 'l':   l = 1;
+                case 'l':   flag |= LINES;
                     break;
-                case 'w':  w = 1;
+                case 'w':   flag |= WORDS;
                     break;
                 default:
-                    fprintf(stdout, PNAME ": error: specified unrecognized argument '%s'\n", &argv[i + 1][1]);
+                    fprintf(stdout, PNAME ": error: specified unrecognized argument '%s'\n", &argv[i][1]);
                     return -1;
             }
     for (size_t i = 0; i < count; ++i)
