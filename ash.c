@@ -34,6 +34,8 @@
 #define TRM_WHITE "\x1b[37m"
 #define TRM_GREEN "\x1b[32m"
 
+extern int gethostname(char *, size_t);
+
 static char *pwd = NULL;
 static size_t pwd_size = DEFAULT_PATH_SIZE;
 static char *dir = NULL;
@@ -82,7 +84,7 @@ enum ash_errno {
     TYPE_ERR,
     PARSE_ERR,
     UREG_CMD_ERR,
-    SIG_ERR
+    SIG_MSG_ERR
 };
 
 static const char *perr(int o)
@@ -92,7 +94,7 @@ static const char *perr(int o)
         case TYPE_ERR:        return "incorrect value type";
         case PARSE_ERR:       return "parsed with errors";
         case UREG_CMD_ERR:    return "unrecognized command";
-        case SIG_ERR:         return "abnormal termination";
+        case SIG_MSG_ERR:     return "abnormal termination";
     }
     return NULL;
 }
@@ -352,7 +354,7 @@ static void execute(const char *p, char *const argv[])
     else {
         wait(&status);
         if (WIFSIGNALED(status)){
-            print_err_builtin(argv[0], perr(SIG_ERR));
+            print_err_builtin(argv[0], perr(SIG_MSG_ERR));
             fprintf(stderr, "%s: exit status: %d\n", argv[0], WTERMSIG(status));
         }
     }
@@ -425,7 +427,7 @@ static void ash_uname_host(void)
 {
     uname = getpwuid(getuid())->pw_name;
     if (host)
-        gethostname(host, MAX_HOST_SIZE);
+        gethostname((char *)host, MAX_HOST_SIZE);
 }
 
 static void ash_init(void)
@@ -477,7 +479,7 @@ static int ash_option(int argc, const char **argv)
     for (size_t i = 0; i < argc; i++)
         if (argv[i][0] == '-' && argv[i][1] == '-'){
             const char *s = &argv[i][2];
-            if(!strcmp(s, "help"))
+            if (!strcmp(s, "help"))
                 ash_print_help();
 
             return 0;
