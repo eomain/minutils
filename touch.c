@@ -26,11 +26,11 @@ static void touch(const char *fname)
 int main(int argc, const char *argv[])
 {
     if (argc == 1){
-        fprintf(stdout, "%s: usage: [file]\n", PNAME);
+        fprintf(stdout, "%s: usage: [file...]\n", PNAME);
         return 0;
     }
 
-    for(size_t i = 0; i < argc -1; ++i)
-        touch(argv[i + 1]);
+    for(size_t i = 1; i < argc; ++i)
+        touch(argv[i]);
     return 0;
 }
