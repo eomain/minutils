@@ -2,6 +2,7 @@
    see LICENSE for the full license info
 */
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +10,7 @@
 
 #define PNAME "cat"
 #define BSIZE 4096
+#define BLANK ' '
 
 static void print_err(const char *msg)
 {
@@ -32,21 +34,28 @@ static int cat(const char *fname)
     size_t len = ftell(s);
     fseek(s, 0, SEEK_SET);
 
+    char *f;
+
     if(len < BSIZE){
         char buf[BSIZE];
         memset(buf, 0, BSIZE);
         if (fread(buf, sizeof (char), len, s) != len)
             print_errno(fname);
-        fputs(buf, stdout);
+        f = buf;
     } else {
-        char *mbuf = calloc((len + 1), sizeof(char));
-        if(!mbuf)
+        f = calloc((len + 1), sizeof(char));
+        if(!f)
             print_errno(fname);
-        if (fread(mbuf, sizeof (char), len, s) != len)
+        if (fread(f, sizeof (char), len, s) != len)
             print_errno(fname);
-        fputs(mbuf, stdout);
     }
-    fputc('\n', stdout);
+
+    for (size_t i = 0; i < len; ++i)
+        if (!isspace(f[i]) && !isprint(f[i]))
+            f[i] = BLANK;
+    fputs(f, stdout);
+    if(f[len -1] != '\n')
+        fputc('\n', stdout);
     fclose(s);
     return 0;
 }
