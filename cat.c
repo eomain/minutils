@@ -51,12 +51,12 @@ static int cat(const char *fname)
     if (blank > 0){
         const char sp[] = BLANK;
         size_t o = sizeof (sp);
-        size_t v = ++len + (blank * o);
+        size_t v = len + (blank * o);
         char *n = calloc( v, sizeof (char));
         if (!n)
             print_errno(fname);
         size_t k = 0;
-        for (size_t i = 0; i < len -1; ++i){
+        for (size_t i = 0; i < len; ++i){
             char c = f[i];
             if (!isspace(c) && !isprint(c)){
                 memcpy(&n[k], sp, o);
