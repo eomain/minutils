@@ -30,7 +30,7 @@ int main(int argc, const char *argv[])
         return 0;
     }
 
-    for(size_t i = 1; i < argc; ++i)
+    for (size_t i = 1; i < argc; ++i)
         touch(argv[i]);
     return 0;
 }

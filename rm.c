@@ -17,7 +17,7 @@ static void print_errno(const char *msg)
 
 static void rm(const char* s)
 {
-    if(remove(s))
+    if (remove(s))
         print_errno(s);
 }
 
@@ -28,7 +28,7 @@ int main(int argc, const char *argv[])
         return 0;
     }
 
-    for(size_t i = 1; i < argc; ++i)
+    for (size_t i = 1; i < argc; ++i)
         rm(argv[i]);
     return 0;
 }

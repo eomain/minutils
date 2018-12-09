@@ -15,24 +15,19 @@
 #include <unistd.h>
 
 #define PNAME "ash"
-#define VERSION "0.0.1"
-#define PROMPT "$"
+#define VERSION "0.0.2"
+#define PROMPT '$'
 #define ENV_HOME "HOME"
 #define ENV_PATH "PATH"
 #define ENV_ASH_HISTORY ".ash_history"
-#define DEFAULT_UNAME "anon"
-#define DEFAULT_HOST "unknown"
+#define DEFAULT_UNAME "[?]"
+#define DEFAULT_HOST "[unknown]"
 #define DEFAULT_PATH_SIZE 225
 #define DEFAULT_HISTORY_SIZE 500
 #define MAX_HOST_SIZE 64
 #define MIN_BUFFER_SIZE 2096
 #define MAX_BUFFER_SIZE 16384
 #define MAX_ARGV 255
-
-#define TRM_OFF "\x1b[0m"
-#define TRM_BOLD "\x1b[1m"
-#define TRM_WHITE "\x1b[37m"
-#define TRM_GREEN "\x1b[32m"
 
 extern int gethostname(char *, size_t);
 
@@ -95,8 +90,8 @@ static const char *perr(int o)
         case PARSE_ERR:       return "parsed with errors";
         case UREG_CMD_ERR:    return "unrecognized command";
         case SIG_MSG_ERR:     return "abnormal termination";
+        default:              return "internal error";
     }
-    return NULL;
 }
 
 struct ash_variable {
@@ -203,15 +198,19 @@ static void ash_set_builtin_var(int o, const char *v)
 }
 
 static void ash_dir(void){
-    if (pwd){
-        size_t len = strlen(pwd);
-        while (len > 0)
-            if (pwd[--len] == '/'){
-                dir = &pwd[++len];
-                return;
-            }
+    if(home && !strcmp(pwd, home))
+        dir = "~";
+    else {
+        if (pwd){
+            size_t len = strlen(pwd);
+            while (len > 0)
+                if (pwd[--len] == '/'){
+                    dir = &pwd[++len];
+                    return;
+                }
+        } else
+            dir = ".";
     }
-    dir = ".";
 }
 
 static void ash_builtin_exec(int o, int argc, const char * const*argv)
@@ -268,11 +267,8 @@ static void ash_builtin_exec(int o, int argc, const char * const*argv)
                     const char *v = s;
                     if (v[1] == '/')
                         ++v;
-                    size_t pos = strlen(home);
                     memset(home_dir, 0, pwd_size);
-                    strcpy(home_dir, home);
-                    strcpy((home_dir + pos) + 1, ++v);
-                    home_dir[pos] = '/';
+                    sprintf(home_dir, "%s%c%s", home, '/', ++v);
                     s = home_dir;
                 }
                 status = chdir(s);
@@ -280,11 +276,8 @@ static void ash_builtin_exec(int o, int argc, const char * const*argv)
                     print_err_builtin(argv[0], strerror(errno));
                 else {
                     ash_pwd();
-                    struct ash_variable *ash_pwd = ash_find_builtin_var(ASH_PWD);
-                    if (ash_pwd)
-                        ash_pwd->value = pwd;
-                    if (home && !strcmp(pwd, home))
-                        dir = "~";
+                    ash_set_builtin_var(ASH_PWD, pwd);
+                    ash_dir();
                 }
             }
             break;
@@ -330,22 +323,6 @@ static int ash_find_builtin(const char *v)
     return -1;
 }
 
-static int fcheck(const char *s){
-    size_t pos = strlen(path);
-    size_t len = strlen(s) + pos + 2;
-    char arg[len];
-    strcpy(arg, path);
-    arg[pos] = '/';
-    strcpy((arg + pos) + 1, s);
-    arg[len] = '\0';
-
-    if (access(arg, F_OK)){
-        print_errno(s);
-        return -1;
-    }
-    return 0;
-}
-
 static void execute(const char *p, char *const argv[])
 {
     pid_t pid;
@@ -355,8 +332,10 @@ static void execute(const char *p, char *const argv[])
     if (pid == -1)
         print_errno(argv[0]);
     else if (pid == 0){
-        if (execvp(p, argv) == -1)
+        if (execvp(p, argv) == -1){
             print_errno(argv[0]);
+            exit(1);
+        }
     }
     else {
         wait(&status);
@@ -369,7 +348,7 @@ static void execute(const char *p, char *const argv[])
 
 static void print(void)
 {
-    fprintf(stdout, TRM_BOLD TRM_GREEN "%s::%s " TRM_OFF TRM_BOLD "%s|" PROMPT TRM_OFF " " , uname, host, dir);
+    fprintf(stdout, "%s::%s %s|%c " , uname, host, dir, PROMPT);
 }
 
 static int command(int argc, const char **argv)
@@ -443,25 +422,19 @@ static void ash_init(void)
     if ((pwd = malloc(sizeof (char) * pwd_size)) != NULL)
         ash_pwd();
 
-    uname = getpwuid(getuid())->pw_name;
-    char *h = NULL;
-    if ((h = malloc(sizeof (char) * MAX_HOST_SIZE)) != NULL){
-        if(!gethostname(h, MAX_HOST_SIZE))
-            host = h;
-    }
+    host = malloc(sizeof (char) * MAX_HOST_SIZE);
+    ash_uname_host();
+    path = getenv(ENV_PATH);
+    home = getenv(ENV_HOME);
+    if (!home)
+        home = getpwuid(getuid())->pw_dir;
 
     ash_set_builtin_var(ASH_HOST, host);
-    ash_set_builtin_var(ASH_PATH, getenv(ENV_PATH));
+    ash_set_builtin_var(ASH_PATH, path);
     ash_set_builtin_var(ASH_PWD, pwd);
     ash_set_builtin_var(ASH_LOGNAME, uname);
-    struct ash_variable *ash_home = ash_find_builtin_var(ASH_HOME);
-    if (ash_home){
-        if ((ash_home->value = getenv(ENV_HOME)) == NULL)
-            ash_home->value = getpwuid(getuid())->pw_dir;
-            home = ash_home->value;
-        if (ash_home->value && !strcmp(pwd, ash_home->value))
-                        dir = "~";
-    }
+    ash_set_builtin_var(ASH_HOME, home);
+    ash_dir();
 }
 
 static void ash_main(int argc, const char **pargs)
@@ -473,14 +446,22 @@ static void ash_main(int argc, const char **pargs)
     }
 }
 
+static void ash_print(const char *msg)
+{
+    fprintf(stdout, PNAME ": %s\n", msg);
+}
+
 static int ash_option(int argc, const char **argv)
 {
     for (size_t i = 0; i < argc; i++)
         if (argv[i][0] == '-' && argv[i][1] == '-'){
             const char *s = &argv[i][2];
+            if (!(*s))
+                print_err("no option specified");
             if (!strcmp(s, "help"))
                 ash_print_help();
-
+            else if (!strcmp(s, "version"))
+                ash_print(VERSION);
             return 0;
         }
     return -1;
