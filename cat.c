@@ -71,8 +71,6 @@ static int cat(const char *fname)
         f = n;
     }
     fputs(f, stdout);
-    if(f[len -1] != '\n')
-        fputc('\n', stdout);
     fclose(s);
     if (f != buf)
         free(f);
