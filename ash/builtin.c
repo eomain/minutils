@@ -171,42 +171,42 @@ int ash_find_builtin(const char *v)
 
 static void ash_print_builtin_info(int o, const char *s)
 {
-    printf( PNAME ": command: ");
+    ash_print( PNAME ": command: ");
     switch (o){
         case BUILTIN:
-            printf("%s :: list builtin commands\n", s);
+            ash_print("%s :: list builtin commands\n", s);
             break;
 
         case CD:
-            printf("%s [dir] :: change directory\n", s);
+            ash_print("%s [dir] :: change directory\n", s);
             break;
 
         case ECHO:
-            printf("%s :: print to stdout\n", s);
+            ash_print("%s :: print to stdout\n", s);
             break;
 
         case EXIT:
-            printf("%s :: exit shell session\n", s);
+            ash_print("%s :: exit shell session\n", s);
             break;
 
         case HELP:
-            printf("%s :: show usage info\n", s);
+            ash_print("%s :: show usage info\n", s);
             break;
 
         case SLEEP:
-            printf("%s [sec] :: sleep for [sec] seconds\n", s);
+            ash_print("%s [sec] :: sleep for [sec] seconds\n", s);
             break;
     }
 }
 
 static void ash_print_builtin(void)
 {
-    puts("list of builtin commands:");
-    puts("type builtin [command] for more info\n");
-    puts("builtin");
-    puts("cd");
-    puts("echo");
-    puts("exit");
-    puts("help");
-    puts("sleep");
+    ash_print("list of builtin commands:\n");
+    ash_print("type builtin [command] for more info\n\n");
+    ash_print("builtin\n");
+    ash_print("cd\n");
+    ash_print("echo\n");
+    ash_print("exit\n");
+    ash_print("help\n");
+    ash_print("sleep\n");
 }
