@@ -82,9 +82,9 @@ enum ash_errno {
     SIG_MSG_ERR
 };
 
-static const char *perr(int o)
+static const char *perr(int msg)
 {
-    switch (o){
+    switch (msg){
         case ARG_MSG_ERR:     return "expected argument";
         case TYPE_ERR:        return "incorrect value type";
         case PARSE_ERR:       return "parsed with errors";
@@ -192,7 +192,7 @@ static struct ash_variable *ash_find_var(const char *s)
 static void ash_set_builtin_var(int o, const char *v)
 {
     struct ash_variable *var = ash_find_builtin_var(o);
-    if(var)
+    if(var && var->id == o)
         var->value = v;
 }
 
@@ -230,6 +230,9 @@ static void ash_builtin_exec(int o, int argc, const char * const*argv)
 
         case EXIT:
             exit(0);
+            break;
+
+        case EXPORT:
             break;
 
         case ECHO:
