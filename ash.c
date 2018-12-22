@@ -54,7 +54,6 @@ enum ash_builtin {
     ECHO,
     SLEEP,
     CD,
-    CLEAR,
     HELP,
     BUILTIN
 };
@@ -332,10 +331,9 @@ static void execute(const char *p, char *const argv[])
     if (pid == -1)
         print_errno(argv[0]);
     else if (pid == 0){
-        if (execvp(p, argv) == -1){
+        if (execvp(p, argv) == -1)
             print_errno(argv[0]);
-            exit(1);
-        }
+        _exit(0);
     }
     else {
         wait(&status);
