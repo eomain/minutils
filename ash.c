@@ -289,33 +289,33 @@ static void ash_builtin_exec(int o, int argc, const char * const*argv)
 
 static int ash_find_builtin(const char *v)
 {
-    switch (*(v++)){
+    switch (v[0]){
         case 'b':
-            if (*(v++) == 'u' && *(v++) == 'i' &&
-                *(v++) == 'l' && *(v++) == 't' &&
-                *(v++) == 'i' && *(v++) == 'n' && !(*v))
+            if (v[1] == 'u' && v[2] == 'i' &&
+                v[3] == 'l' && v[4] == 't' &&
+                v[5] == 'i' && v[6] == 'n' && !(v[7]))
                 return BUILTIN;
             break;
         case 'c':
-            if (*(v++) == 'd' && !(*v))
+            if (v[1] == 'd' && !(v[2]))
                 return CD;
             break;
         case 'e':
-            if (*(v++) == 'x' && *(v++) == 'i' &&
-               *(v++) == 't' && !(*v))
+            if (v[1] == 'x' && v[2] == 'i' &&
+                v[3] == 't' && !(v[4]))
                 return EXIT;
-            else if(*(--v) && *(v++) == 'c' && *(v++) == 'h' &&
-                    *(v++) == 'o' && !(*v))
+            else if (v[1] == 'c' && v[2] == 'h' &&
+                     v[3] == 'o' && !(v[4]))
                 return ECHO;
             break;
         case 'h':
-            if (*(v++) == 'e' && *(v++) == 'l' &&
-                *(v++) == 'p' && !(*v))
+            if (v[1] == 'e' && v[2] == 'l' &&
+                v[3] == 'p' && !(v[4]))
                 return HELP;
             break;
         case 's':
-            if (*(v++) == 'l' && *(v++) == 'e' &&
-                *(v++) == 'e' && *(v++) == 'p' && !(*v))
+            if (v[1] == 'l' && v[2] == 'e' &&
+                v[3] == 'e' && v[4] == 'p' && !(v[5]))
                 return SLEEP;
             break;
     }
@@ -358,6 +358,8 @@ static int command(int argc, const char **argv)
                 struct ash_variable *var = ash_find_var(s);
                 if(var && var->value)
                     argv[i] = var->value;
+                else
+                    argv[i] = "\0";
             }
         }
 
