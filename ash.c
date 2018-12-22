@@ -55,7 +55,8 @@ enum ash_builtin {
     SLEEP,
     CD,
     HELP,
-    BUILTIN
+    BUILTIN,
+    EXPORT
 };
 
 static void print_err(const char *msg)
@@ -156,33 +157,32 @@ static struct ash_variable *ash_find_builtin_var(int o)
 static struct ash_variable *ash_find_var(const char *s)
 {
     const char *v = s;
-    switch(*(v++)){
+    switch(v[0]){
         case 'V':
-            if (*(v++) == 'E' && *(v++) == 'R' && *(v++) == 'S' &&
-               *(v++) == 'I' && *(v++) == 'O' && *(v++) == 'N' && !(*v))
+            if (v[1] == 'E' && v[2] == 'R' && v[3] == 'S' &&
+                v[4] == 'I' && v[5] == 'O' && v[6] == 'N' && !(v[7]))
                 return ash_find_builtin_var(ASH_VERSION);
             break;
 
         case 'H':
-            if (*(v++) == 'O'){
-                if (*(v++) == 'S' && *(v++) == 'T' && !(*v))
+            if (v[1] == 'O'){
+                if (v[2] == 'S' && v[3] == 'T' && !(v[4]))
                     return ash_find_builtin_var(ASH_HOST);
-                else if (*(--v) && *(v++) == 'M' && *(v++) == 'E' && !(*v))
+                else if (v[2] == 'M' && v[3] == 'E' && !(v[4]))
                     return ash_find_builtin_var(ASH_HOME);
             }
             break;
 
         case 'P':
-            if (*(v++) == 'A' && *(v++) == 'T' && *(v++) == 'H' &&
-               !(*v))
+            if (v[1] == 'A' && v[2] == 'T' && v[3] == 'H' && !(v[4]))
                 return ash_find_builtin_var(ASH_PATH);
-            else if (*(--v) && *(v++) == 'W' && *(v++) == 'D' && !(*v))
+            else if (v[1] == 'W' && v[2] == 'D' && !(v[3]))
                 return ash_find_builtin_var(ASH_PWD);
             break;
 
         case 'L':
-            if(*(v++) == 'O' && *(v++) == 'G' && *(v++) == 'N' &&
-               *(v++) == 'A' && *(v++) == 'M' && *(v++) == 'E' && !(*v))
+            if(v[1] == 'O' && v[2] == 'G' && v[3] == 'N' &&
+               v[4] == 'A' && v[5] == 'M' && v[6] == 'E' && !(v[7]))
                 return ash_find_builtin_var(ASH_LOGNAME);
             break;
     }
@@ -386,12 +386,19 @@ static void scan(void)
         int argc = 0;
         const char *argv[MAX_ARGV];
         memset(argv, 0, MAX_ARGV);
-        if (!isspace(buf[0]))
-            argv[argc++] = &buf[0];
+        int fmt = 0;
+        if (!isspace(buf[0])){
+            if (!(buf[0] == '\"'))
+                argv[argc++] = &buf[0];
+            else
+                fmt = 1;
+        }
         for (size_t i = 0; i < MIN_BUFFER_SIZE; ++i){
             if (buf[i] == '\n')
                 buf[i] = '\0';
-            if (isspace(buf[i])){
+            if (buf[i] == '"')
+                fmt = !fmt;
+            if (isspace(buf[i]) && !fmt){
                 buf[i] = '\0';
                 if (!isspace(buf[i + 1]))
                     argv[argc++] = &buf[i + 1];
@@ -448,7 +455,7 @@ static void ash_main(int argc, const char **pargs)
 
 static void ash_print(const char *msg)
 {
-    fprintf(stdout, PNAME ": %s\n", msg);
+    fprintf(stdout, PNAME " %s\n", msg);
 }
 
 static int ash_option(int argc, const char **argv)
