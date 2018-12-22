@@ -101,12 +101,12 @@ struct ash_variable {
 };
 
 enum ash_builtin_variable {
-    ASH_VERSION = 0,
-    ASH_HOST = 1,
-    ASH_PATH = 2,
-    ASH_HOME = 3,
-    ASH_PWD = 4,
-    ASH_LOGNAME = 5
+    ASH_VERSION = 0x00,
+    ASH_HOST    = 0x01,
+    ASH_PATH    = 0x02,
+    ASH_HOME    = 0x03,
+    ASH_PWD     = 0x04,
+    ASH_LOGNAME = 0x05
 };
 
 static struct ash_variable ash_vars[] = {
