@@ -38,9 +38,8 @@ static void ash_echo(int argc, const char * const *argv)
 {
     if(argc > 1){
         for (size_t i = 1; i < argc -1; ++i)
-            fprintf(stdout, "%s ", argv[i]);
-        fputs(argv[argc -1], stdout);
-        fputc('\n', stdout);
+            ash_print("%s ", argv[i]);
+        ash_print("%s\n", argv[argc -1]);
     }
 }
 
