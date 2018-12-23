@@ -62,7 +62,7 @@ static int command(int argc, const char **argv)
     if (*(v++) == '$') {
         const char *var = ash_var_get_value( ash_find_var(v) );
         if (var)
-            fprintf(stdout, "%s\n", var);
+            ash_print("%s\n", var);
     } else {
         int o;
         if (( o = ash_find_builtin(argv[0])) != -1)
